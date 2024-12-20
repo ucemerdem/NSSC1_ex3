@@ -6,7 +6,7 @@
 
 using namespace std;
 
-class CCS{
+class CCS_symm{
     private:
         vector<double> vals;
         vector<unsigned int> row_idx;
@@ -14,27 +14,25 @@ class CCS{
         unsigned int n;
 
     public:
-        /// @brief Constructor of the CCS class taking a matrix as input and converting it to the CCS format.
-        CCS(vector<vector<double>> matrix){
+        /// @brief Constructor of the CCS_symm class taking a symmetric matrix as input and converting it to the CCS_symm format.
+        CCS_symm(vector<vector<double>> matrix){
             n = matrix.size();
             unsigned int nnz = 0;
             col_ptr.push_back(0); // Initialize the first column pointer to 0
             for (unsigned int j = 0; j < n; j++){
-                for (unsigned int i = 0; i < n; i++){
+                for (unsigned int i = j; i < n; i++){
                     if (matrix[i][j] != 0){
-                    vals.push_back(matrix[i][j]);
-                    row_idx.push_back(i);
-                    nnz++;
+                        vals.push_back(matrix[i][j]);
+                        row_idx.push_back(i);
+                        nnz++;
                 }
             }
             col_ptr.push_back(nnz);
             }
-
-            // TODO: adapt for symmetric matrices
         }
 
-        /// @brief overload the << operator for nice output of a CCS object
-        friend ostream& operator<< (ostream &os, const CCS &ccs){
+        /// @brief overload the << operator for nice output of a CCS_symm object
+        friend ostream& operator<< (ostream &os, const CCS_symm &ccs){
             os << "Values: ";
             for (unsigned int i = 0; i < ccs.vals.size(); i++){
                 os << ccs.vals[i] << " ";
@@ -64,12 +62,12 @@ vector<vector<double>> parseMTX(string filename){
     // TODO: implement
 }
 
-/// @brief This function generates a random matrix of size n x n with a given percentage of nonzero entries.
+/// @brief This function generates a random symmetric matrix of size n x n with a given percentage of nonzero entries.
 /// @remark This function is for testing purposes only.
 /// @param n The number of rows and columns of the matrix.
 /// @param perc_non_zeros The percentage of nonzero entries in the matrix (a value between 0 and 1).
-/// @return A matrix of size n x n with a given percentage of nonzero entries.
-vector<vector<double>> generateMatrix(unsigned int n, double perc_non_zeros=0.1){
+/// @return A symmetric matrix of size n x n with a given percentage of nonzero entries.
+vector<vector<double>> generateSymmetricMatrix(unsigned int n, double perc_non_zeros=0.1){
     vector<vector<double>> matrix(n, vector<double>(n, 0));
     vector<double> nonzeros(int(ceil(perc_non_zeros * n * n)));
 
@@ -82,13 +80,19 @@ vector<vector<double>> generateMatrix(unsigned int n, double perc_non_zeros=0.1)
 
     unsigned int i, j;
 
-    for(double val : nonzeros){
+    for(int k = 0; k < nonzeros.size(); k++){
         // generate random indices and check whether the generated pair of indices has already been used before to place a nonzero entry in the matrix
         while(true){
             i = int(rand() % n);
             j = int(rand() % n);
             if(matrix[i][j] == 0){
-                matrix[i][j] = val;
+                matrix[i][j] = nonzeros[k];
+                // if the previous line did not place an entry on the main diagonal line, place the same entry mirrored along the main diagonal (to make the matrix symmetric)
+                if (i != j){
+                    matrix[j][i] = nonzeros[k];
+                    // skip one iteration to avoid placing too many entries in the matrix
+                    k++;
+                }
                 break;
             }
         }
@@ -97,14 +101,15 @@ vector<vector<double>> generateMatrix(unsigned int n, double perc_non_zeros=0.1)
 }
 
 int main(){
-    vector<vector<double>> matrix = generateMatrix(5, 0.1);
-    CCS ccs(matrix);
+    vector<vector<double>> matrix = generateSymmetricMatrix(5, 0.2);
+
+    CCS_symm ccs(matrix);
 
     for (unsigned int i = 0; i < matrix.size(); i++){
         for (unsigned int j = 0; j < matrix[i].size(); j++){
-            cout << setw(3) << matrix[i][j] << " ";
+            cout << setw(4) << matrix[i][j] << " ";
         }
-        cout << endl;
+        cout << endl << endl;
     }
 
     cout << ccs << endl;
