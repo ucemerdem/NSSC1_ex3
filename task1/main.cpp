@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <math.h>
 #include <vector>
@@ -31,6 +32,16 @@ class CCS_symm{
             }
         }
 
+        vector<double> getVals(){
+            return vals;
+        }
+        vector<unsigned int> getRowIdx(){
+            return row_idx;
+        }
+        vector<unsigned int> getColPtr(){
+            return col_ptr;
+        }
+
         /// @brief overload the << operator for nice output of a CCS_symm object
         friend ostream& operator<< (ostream &os, const CCS_symm &ccs){
             os << "Values: ";
@@ -55,11 +66,44 @@ class CCS_symm{
         }
 };
 
+/// @brief overload the << operator for nice output of matrices
+ostream& operator<< (ostream &os, const vector<vector<double>> &matrix){
+    for (unsigned int i = 0; i < matrix.size(); i++){
+        for (unsigned int j = 0; j < matrix[i].size(); j++){
+            os << setw(4) << matrix[i][j] << " ";
+        }
+        os << endl << endl;
+    }
+    return os;
+}
+
 /// @brief This function parses a matrix stored in the Matrix Market format (.mtx).
 /// @param filename The name of the file containing the matrix in the Matrix Market format.
 /// @return A matrix in the form of a vector of vectors.
-vector<vector<double>> parseMTX(string filename){
-    // TODO: implement
+vector<vector<double>> parseMTX(const string& filename){
+    ifstream reader(filename);
+    string line;
+    unsigned int rows, cols, entries;
+
+    getline(reader, line); // skip the first line
+
+    // extract the number of rows, columns, and the number of entries from the second line
+    reader >> rows >> cols >> entries;
+
+    vector<vector<double>> matrix(rows, vector<double>(cols, 0)); // 'rows' and 'cols' are interchangeable since the matrix is symmetric
+
+    // continue with the third line until the end of the file to extract the non-zero entries
+    unsigned int i, j;
+    double val;
+    for (int k = 0; k < entries; k++){
+        reader >> i >> j >> val;
+        matrix[i-1][j-1] = val;
+        matrix[j-1][i-1] = val; // make the matrix symmetric
+    }
+
+    reader.close();
+
+    return matrix;
 }
 
 /// @brief This function generates a random symmetric matrix of size n x n with a given percentage of nonzero entries.
@@ -101,18 +145,22 @@ vector<vector<double>> generateSymmetricMatrix(unsigned int n, double perc_non_z
 }
 
 int main(){
-    vector<vector<double>> matrix = generateSymmetricMatrix(5, 0.2);
+    vector<vector<double>> matrix_test = generateSymmetricMatrix(5, 0.2);
+    CCS_symm ccs_test(matrix_test);
 
-    CCS_symm ccs(matrix);
+    cout << matrix_test << endl;
+    cout << ccs_test << endl;
 
-    for (unsigned int i = 0; i < matrix.size(); i++){
-        for (unsigned int j = 0; j < matrix[i].size(); j++){
-            cout << setw(4) << matrix[i][j] << " ";
-        }
-        cout << endl << endl;
-    }
+    vector<vector<double>> matrix_mtx = parseMTX("bcsstk13.mtx");
 
-    cout << ccs << endl;
+    // cout << matrix_mtx << endl;
+
+    CCS_symm ccs_mtx(matrix_mtx);
+
+    cout << "MTX parsing and conversion to CCS done:" << endl;
+    cout << "Number of values: " << ccs_mtx.getVals().size() << endl;
+    cout << "Number of row indices: " << ccs_mtx.getRowIdx().size() << endl;
+    cout << "Numbe rof column pointers: " << ccs_mtx.getColPtr().size() << endl;
 
     return 0;
 }
