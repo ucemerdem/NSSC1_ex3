@@ -41,6 +41,9 @@ class CCS_symm{
         vector<unsigned int> getColPtr(){
             return col_ptr;
         }
+        unsigned int getSize(){
+            return n;
+        }
 
         /// @brief overload the << operator for nice output of a CCS_symm object
         friend ostream& operator<< (ostream &os, const CCS_symm &ccs){
@@ -74,6 +77,15 @@ ostream& operator<< (ostream &os, const vector<vector<double>> &matrix){
         }
         os << endl << endl;
     }
+    return os;
+}
+
+/// @brief overload the << operator for nice output of vectors
+ostream& operator<< (ostream &os, const vector<double> &vec){
+    for (unsigned int i = 0; i < vec.size(); i++){
+        os << vec[i] << " ";
+    }
+    os << endl;
     return os;
 }
 
@@ -144,8 +156,33 @@ vector<vector<double>> generateSymmetricMatrix(unsigned int n, double perc_non_z
     return matrix;
 }
 
+/// @brief This function performs a matrix-vector multiplication using the CCS_symm format.
+/// @param ccs The CCS_symm object representing the matrix.
+/// @param x The vector to be multiplied with the matrix.
+/// @return The resulting vector of the matrix-vector multiplication.
+vector<double> MVmultCCS_symm(CCS_symm& ccs, vector<double>& x){
+    // initialize the result vector with zeros
+    vector<double> result(ccs.getSize(), 0);
+
+    // iterate over all columns
+    for (unsigned int j = 0; j < ccs.getSize(); j++){
+        // retrieve the indices for vals and row_idx for the current column
+        // and perform the matrix-vector multiplication
+        for (unsigned int i = ccs.getColPtr()[j]; i < ccs.getColPtr()[j+1]; i++){
+            result[ccs.getRowIdx()[i]] += ccs.getVals()[i] * x[j];
+            // check not to double-count the diagonal
+            if (ccs.getRowIdx()[i] != j){
+                // transposed multiplication
+                result[j] += ccs.getVals()[i] * x[ccs.getRowIdx()[i]];
+            }
+        }
+    }
+
+    return result;
+}
+
 int main(){
-    vector<vector<double>> matrix_test = generateSymmetricMatrix(5, 0.2);
+    vector<vector<double>> matrix_test = generateSymmetricMatrix(5, 0.25);
     CCS_symm ccs_test(matrix_test);
 
     cout << matrix_test << endl;
@@ -160,7 +197,15 @@ int main(){
     cout << "MTX parsing and conversion to CCS done:" << endl;
     cout << "Number of values: " << ccs_mtx.getVals().size() << endl;
     cout << "Number of row indices: " << ccs_mtx.getRowIdx().size() << endl;
-    cout << "Numbe rof column pointers: " << ccs_mtx.getColPtr().size() << endl;
+    cout << "Number of column pointers: " << ccs_mtx.getColPtr().size() << endl;
+
+    vector<double> b;
+    vector<double> x(ccs_test.getSize(), 1);
+
+    b = MVmultCCS_symm(ccs_test, x);
+
+    cout << endl << "Multiplying the above test matrix with a vector of ones ..." << endl;
+    cout << "Result: " << b << endl;
 
     return 0;
 }
