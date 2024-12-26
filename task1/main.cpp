@@ -217,6 +217,15 @@ vector<double> MVmultCCS_symm(CCS_symm& ccs, vector<double>& x){
     return result;
 }
 
+/// @brief This function calculates the norm of a vector with respect to the A-norm of a matrix stored in CCS format.
+/// @param vec The vector for which the norm is to be calculated.
+/// @param ccs The matrix based on which the norm is to be calculated, stored in CCS format.
+/// @return The norm of the vector with respect to the A-norm of the matrix.
+double getVectorANorm(vector<double>& vec, CCS_symm& ccs){
+    vector<double> result = MVmultCCS_symm(ccs, vec);
+    return sqrt(result * result);
+}
+
 /// @brief Calculate the solution x to Ax=b via the non-preconditioned conjugate gradient method, using a symmetric matrix stored in CCS format
 /// @param ccs The symmetric, positive definite system matrix stored in CCS format
 /// @param x0 The initial guess
@@ -245,7 +254,8 @@ vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b){
         x = x + alpha * p;
         r = r - alpha * Ap;
         r_norm = sqrt(r * r);
-        if (r_norm < EPS || abs(r_norm - r_norm_old) < EPS*EPS){
+        // FIXME: reconsider whether the stopping criterion is correct
+        if (r_norm < EPS || abs(r_norm - r_norm_old) < EPS){
             break;
         }
         beta = (r * r) / r_old;
@@ -253,10 +263,13 @@ vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b){
         r_norm_old = r_norm;
         r_old = r * r;
         iterations++;
-        cout << iterations << endl;
     }
 
     cout << "Number of iterations: " << iterations << endl;
+    vector<double> r0 = b - MVmultCCS_symm(ccs, x0);
+    cout << "Norm of last residual divided by norm of initial residual: " << r_norm / sqrt(r0 * r0) << endl;
+    vector<double> x_diff = vector<double>(ccs.getSize(), 1.0) - x;
+    cout << "Error on A-norm: " << getVectorANorm(x_diff, ccs) << endl;
 
     return x;
 }
