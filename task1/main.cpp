@@ -89,6 +89,42 @@ ostream& operator<< (ostream &os, const vector<double> &vec){
     return os;
 }
 
+/// @brief overload the - operator for vector subtraction
+vector<double> operator- (vector<double> a, vector<double> b){
+    vector<double> result(a.size());
+    for (unsigned int i = 0; i < a.size(); i++){
+        result[i] = a[i] - b[i];
+    }
+    return result;
+}
+
+/// @brief overload the * operator for vector multiplication (inner product)
+double operator* (vector<double> a, vector<double> b){
+    double result = 0.0;
+    for (unsigned int i = 0; i < a.size(); i++){
+        result += a[i] * b[i];
+    }
+    return result;
+}
+
+/// @brief overload the * operator for scalar-vector multiplication
+vector<double> operator* (double a, vector<double> b){
+    vector<double> result(b.size());
+    for (unsigned int i = 0; i < b.size(); i++){
+        result[i] = a * b[i];
+    }
+    return result;
+}
+
+/// @brief overload the + operator for vector addition
+vector<double> operator+ (const vector<double>& a, const vector<double>& b){
+    vector<double> result(a.size());
+    for (unsigned int i = 0; i < a.size(); i++){
+        result[i] = a[i] + b[i];
+    }
+    return result;
+}
+
 /// @brief This function parses a matrix stored in the Matrix Market format (.mtx).
 /// @param filename The name of the file containing the matrix in the Matrix Market format.
 /// @return A matrix in the form of a vector of vectors.
@@ -124,7 +160,7 @@ vector<vector<double>> parseMTX(const string& filename){
 /// @param perc_non_zeros The percentage of nonzero entries in the matrix (a value between 0 and 1).
 /// @return A symmetric matrix of size n x n with a given percentage of nonzero entries.
 vector<vector<double>> generateSymmetricMatrix(unsigned int n, double perc_non_zeros=0.1){
-    vector<vector<double>> matrix(n, vector<double>(n, 0));
+    vector<vector<double>> matrix(n, vector<double>(n, 0.0));
     vector<double> nonzeros(int(ceil(perc_non_zeros * n * n)));
 
     // initialize random seed
@@ -162,7 +198,7 @@ vector<vector<double>> generateSymmetricMatrix(unsigned int n, double perc_non_z
 /// @return The resulting vector of the matrix-vector multiplication.
 vector<double> MVmultCCS_symm(CCS_symm& ccs, vector<double>& x){
     // initialize the result vector with zeros
-    vector<double> result(ccs.getSize(), 0);
+    vector<double> result(ccs.getSize(), 0.0);
 
     // iterate over all columns
     for (unsigned int j = 0; j < ccs.getSize(); j++){
@@ -181,13 +217,60 @@ vector<double> MVmultCCS_symm(CCS_symm& ccs, vector<double>& x){
     return result;
 }
 
+/// @brief Calculate the solution x to Ax=b via the non-preconditioned conjugate gradient method, using a symmetric matrix stored in CCS format
+/// @param ccs The symmetric, positive definite system matrix stored in CCS format
+/// @param x0 The initial guess
+/// @param b The right-hand side of the matrix equation Ax=b
+/// @return The solution vector
+vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b){
+    // r is the residual vector (i.e. the difference between the right-hand side and the current approximation)
+    // p is the search direction for the next iteration
+    // x is the current approximation
+    // Ap is the matrix-vector product of A and p used in the CG method
+    // alpha and beta are the coefficients used in the CG method (i.e. the step sizes)
+    // r_old_sq is the dot-product of the residual vector from the previous iteration
+    // r_norm and r_norm_old are norms used as stopping criteria
+    // EPS is the machine epsilon used as a threshold for the stopping criterion
+    vector<double> r = b - MVmultCCS_symm(ccs, x0);
+    vector<double> p = r;
+    vector<double> x = x0;
+    vector<double> Ap(ccs.getSize(), 0.0);
+    double alpha, beta, r_old = r * r, r_norm, r_norm_old = sqrt(r * r);
+    double EPS = 1e-6;
+    unsigned int iterations = 0;
+
+    while(iterations < ccs.getSize()){
+        Ap = MVmultCCS_symm(ccs, p);
+        alpha = (r * r) / (p * Ap);
+        x = x + alpha * p;
+        r = r - alpha * Ap;
+        r_norm = sqrt(r * r);
+        if (r_norm < EPS || abs(r_norm - r_norm_old) < EPS*EPS){
+            break;
+        }
+        beta = (r * r) / r_old;
+        p = r + beta * p;
+        r_norm_old = r_norm;
+        r_old = r * r;
+        iterations++;
+        cout << iterations << endl;
+    }
+
+    cout << "Number of iterations: " << iterations << endl;
+
+    return x;
+}
+
 int main(){
-    vector<vector<double>> matrix_test = generateSymmetricMatrix(5, 0.25);
+    // do a test run of the CCS_symm class, using a randomly generated symmetric matrix
+    vector<vector<double>> matrix_test = generateSymmetricMatrix(6, 0.25);
     CCS_symm ccs_test(matrix_test);
 
+    cout << "TEST MATRIX: " << endl;
     cout << matrix_test << endl;
     cout << ccs_test << endl;
 
+    // obtain the matrix from file BCSSTK13 in the Matrix Market format
     vector<vector<double>> matrix_mtx = parseMTX("bcsstk13.mtx");
 
     // cout << matrix_mtx << endl;
@@ -199,13 +282,40 @@ int main(){
     cout << "Number of row indices: " << ccs_mtx.getRowIdx().size() << endl;
     cout << "Number of column pointers: " << ccs_mtx.getColPtr().size() << endl;
 
+    // TEST MATRIX
+    // prescribe the right-hand side b to the given solution x=[1,...,1]
     vector<double> b;
-    vector<double> x(ccs_test.getSize(), 1);
+    vector<double> x(ccs_test.getSize(), 1.0);
 
     b = MVmultCCS_symm(ccs_test, x);
 
     cout << endl << "Multiplying the above test matrix with a vector of ones ..." << endl;
     cout << "Result: " << b << endl;
+
+    // excecute CG method using the previously calculated b and the initial guess x0=[0,...,0]
+    cout << "Executing the CG method for the test matrix ..." << endl;
+    
+    vector<double> x0(ccs_test.getSize(), 0.0);
+    vector<double> result = executeCG(ccs_test, x0, b);
+
+    cout << "Result: " << result << endl;
+
+
+    // // MTX MATRIX
+    // // prescribe the right-hand side b to the given solution x=[1,...,1]
+    // x = vector<double>(ccs_mtx.getSize(), 1.0);
+
+    // b = MVmultCCS_symm(ccs_mtx, x);
+
+    // cout << endl << "Multiplying BCSSTK13.mtx matrix with a vector of ones ..." << endl;
+
+    // // excecute CG method using the previously calculated b and the initial guess x0=[0,...,0]
+    // cout << "Executing the CG method for BCSSTK13 ..." << endl;
+    
+    // x0 = vector<double>(ccs_mtx.getSize(), 0.0);
+    // result = executeCG(ccs_mtx, x0, b);
+
+    // cout << "Result: " << result << endl;
 
     return 0;
 }
