@@ -7,6 +7,29 @@
 
 using namespace std;
 
+namespace program_options {
+
+struct Options {
+  string name;
+  unsigned int iters;
+  void print() const {
+    printf("name: %s\n", name.c_str());
+    printf("iters: %u\n", iters);
+  }
+};
+
+auto parse(int argc, char *argv[]) {
+  if (argc != 3)
+    throw runtime_error("unexpected number of arguments");
+  Options opts;
+  opts.name = argv[1];
+  if (sscanf(argv[2], "%u", &opts.iters) != 1 || opts.iters <= 0)
+    throw runtime_error("invalid parameter for iters");
+  return opts;
+}
+
+} // namespace program_options
+
 class CCS_symm{
     private:
         vector<double> vals;
@@ -230,8 +253,9 @@ double getVectorANorm(vector<double>& vec, CCS_symm& ccs){
 /// @param ccs The symmetric, positive definite system matrix stored in CCS format
 /// @param x0 The initial guess
 /// @param b The right-hand side of the matrix equation Ax=b
+/// @param max_iters The maximum number of iterations
 /// @return The solution vector
-vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b){
+vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b, unsigned int max_iters){
     // r is the residual vector (i.e. the difference between the right-hand side and the current approximation)
     // p is the search direction for the next iteration
     // x is the current approximation
@@ -247,8 +271,13 @@ vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b){
     double alpha, beta, r_old = r * r, r_norm, r_norm_old = sqrt(r * r);
     double EPS = 1e-6;
     unsigned int iterations = 0;
+    
+    // These are needed for plotting the convergence of the CG method via the Python script
+    vector<double> r0 = b - MVmultCCS_symm(ccs, x0);
+    vector<double> expected_solution = vector<double>(ccs.getSize(), 1.0);
+    vector<double> x_diff;
 
-    while(iterations < ccs.getSize()){
+    while(iterations < max_iters && iterations < ccs.getSize()){
         Ap = MVmultCCS_symm(ccs, p);
         alpha = (r * r) / (p * Ap);
         x = x + alpha * p;
@@ -263,72 +292,77 @@ vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b){
         r_norm_old = r_norm;
         r_old = r * r;
         iterations++;
+
+        x_diff = expected_solution - x;
+        cout << r_norm / sqrt(r0 * r0) << " ";
+        cout << getVectorANorm(x_diff, ccs) << endl;
     }
 
-    cout << "Number of iterations: " << iterations << endl;
-    vector<double> r0 = b - MVmultCCS_symm(ccs, x0);
-    cout << "Norm of last residual divided by norm of initial residual: " << r_norm / sqrt(r0 * r0) << endl;
-    vector<double> x_diff = vector<double>(ccs.getSize(), 1.0) - x;
-    cout << "Error on A-norm: " << getVectorANorm(x_diff, ccs) << endl;
+    // cout << "Number of iterations: " << iterations << endl;
+    
+    // cout << "Norm of last residual divided by norm of initial residual: " << r_norm / sqrt(r0 * r0) << endl;
+    
+    // cout << "Error on A-norm: " << getVectorANorm(x_diff, ccs) << endl;
 
     return x;
 }
 
-int main(){
-    // do a test run of the CCS_symm class, using a randomly generated symmetric matrix
-    vector<vector<double>> matrix_test = generateSymmetricMatrix(6, 0.25);
-    CCS_symm ccs_test(matrix_test);
+int main(int argc, char *argv[]) try{
+    auto opts = program_options::parse(argc, argv);
 
-    cout << "TEST MATRIX: " << endl;
-    cout << matrix_test << endl;
-    cout << ccs_test << endl;
+    // do a test run of the CCS_symm class, using a randomly generated symmetric matrix
+    // vector<vector<double>> matrix_test = generateSymmetricMatrix(6, 0.25);
+    // CCS_symm ccs_test(matrix_test);
+
+    // cout << "TEST MATRIX: " << endl;
+    // cout << matrix_test << endl;
+    // cout << ccs_test << endl;
 
     // obtain the matrix from file BCSSTK13 in the Matrix Market format
-    vector<vector<double>> matrix_mtx = parseMTX("bcsstk13.mtx");
-
-    // cout << matrix_mtx << endl;
-
+    vector<vector<double>> matrix_mtx = parseMTX(opts.name);
     CCS_symm ccs_mtx(matrix_mtx);
 
-    cout << "MTX parsing and conversion to CCS done:" << endl;
-    cout << "Number of values: " << ccs_mtx.getVals().size() << endl;
-    cout << "Number of row indices: " << ccs_mtx.getRowIdx().size() << endl;
-    cout << "Number of column pointers: " << ccs_mtx.getColPtr().size() << endl;
+    // cout << "MTX parsing and conversion to CCS done:" << endl;
+    // cout << "Number of values: " << ccs_mtx.getVals().size() << endl;
+    // cout << "Number of row indices: " << ccs_mtx.getRowIdx().size() << endl;
+    // cout << "Number of column pointers: " << ccs_mtx.getColPtr().size() << endl;
 
     // TEST MATRIX
     // prescribe the right-hand side b to the given solution x=[1,...,1]
-    vector<double> b;
-    vector<double> x(ccs_test.getSize(), 1.0);
+    // vector<double> b;
+    // vector<double> x(ccs_test.getSize(), 1.0);
 
-    b = MVmultCCS_symm(ccs_test, x);
+    // b = MVmultCCS_symm(ccs_test, x);
 
-    cout << endl << "Multiplying the above test matrix with a vector of ones ..." << endl;
-    cout << "Result: " << b << endl;
+    // cout << endl << "Multiplying the above test matrix with a vector of ones ..." << endl;
+    // cout << "Result: " << b << endl;
 
     // excecute CG method using the previously calculated b and the initial guess x0=[0,...,0]
-    cout << "Executing the CG method for the test matrix ..." << endl;
+    // cout << "Executing the CG method for the test matrix ..." << endl;
     
-    vector<double> x0(ccs_test.getSize(), 0.0);
-    vector<double> result = executeCG(ccs_test, x0, b);
-
-    cout << "Result: " << result << endl;
-
-
-    // // MTX MATRIX
-    // // prescribe the right-hand side b to the given solution x=[1,...,1]
-    // x = vector<double>(ccs_mtx.getSize(), 1.0);
-
-    // b = MVmultCCS_symm(ccs_mtx, x);
-
-    // cout << endl << "Multiplying BCSSTK13.mtx matrix with a vector of ones ..." << endl;
-
-    // // excecute CG method using the previously calculated b and the initial guess x0=[0,...,0]
-    // cout << "Executing the CG method for BCSSTK13 ..." << endl;
-    
-    // x0 = vector<double>(ccs_mtx.getSize(), 0.0);
-    // result = executeCG(ccs_mtx, x0, b);
+    // vector<double> x0(ccs_test.getSize(), 0.0);
+    // vector<double> result = executeCG(ccs_test, x0, b, opts.iters);
 
     // cout << "Result: " << result << endl;
 
-    return 0;
+
+    // MTX MATRIX
+    // prescribe the right-hand side b to the given solution x=[1,...,1]
+    vector<double> x(ccs_mtx.getSize(), 1.0);
+    vector<double> b = MVmultCCS_symm(ccs_mtx, x);
+
+    // cout << endl << "Multiplying BCSSTK13.mtx matrix with a vector of ones ..." << endl;
+
+    // excecute CG method using the previously calculated b and the initial guess x0=[0,...,0]
+    // cout << "Executing the CG method for BCSSTK13 ..." << endl;
+    
+    vector<double> x0(ccs_mtx.getSize(), 0.0);
+    vector<double> result = executeCG(ccs_mtx, x0, b, opts.iters);
+
+    // cout << "Result: " << result << endl;
+
+  return EXIT_SUCCESS;
+} catch (exception &e) {
+  cout << e.what() << endl;
+  return EXIT_FAILURE;
 }
