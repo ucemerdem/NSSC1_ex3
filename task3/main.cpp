@@ -14,8 +14,6 @@ double process_MCI(int seed, double (*func)(double), double xmin, double xmax, i
 
 auto master_function(int value, double (*func)(double), double xmin, double xmax, int N){
     std::mt19937 rng(value); // first RNG
-    std::cout << std::endl << "##### START MONTE CARLO INTEGRATION #####" << std::endl << std::endl;
-    
 
     double final_approx = 0.0;
     int threads_num = 0;
@@ -23,24 +21,25 @@ auto master_function(int value, double (*func)(double), double xmin, double xmax
     #pragma omp parallel reduction(+:final_approx, threads_num)
     {
         threads_num += 1;   // for getting total thread number
-
-        #pragma omp critical 
-        {
-            // for each thread: own random number
-            int seed = rng();
-            
-            // call MCI function to calc for each thread
-            double thread_approx = process_MCI(seed, func, xmin, xmax, N);
-            std::cout << "-- Approx from Thread #" << omp_get_thread_num() << ": " << thread_approx << std::endl << std::endl;
-            final_approx += thread_approx;
+        int samples = N/omp_get_num_threads();
+        if(omp_get_thread_num() == 0){
+            samples += N%omp_get_num_threads();
         }
-        
+
+        // for each thread: own random number
+        int seed = rng();
+            
+        // call MCI function to calc for each thread
+        double thread_approx = process_MCI(seed, func, xmin, xmax, samples);
+        std::cout << "-- Approx from Thread #" << omp_get_thread_num() << ": " << thread_approx << std::endl << std::endl;
+        //std::cout << "(samples: " << samples << ")" << std::endl << std::endl;
+        final_approx += thread_approx;
     }
+
     final_approx = final_approx/double(threads_num);
     std::cout << "Threads used: " << threads_num  << std::endl;
     std::cout << "Total samples: " << N << std::endl << std::endl;
-    std::cout << "FINAL APPROXIMATION: " << final_approx << std::endl;
-            
+    std::cout << "FINAL APPROXIMATION: " << final_approx << std::endl;     
 };
 
 ////// math functions /////
@@ -77,8 +76,6 @@ double process_MCI(int seed, double (*func)(double), double xmin, double xmax, i
     
     // return sum: whole integral
     return sum;
-
-
 }; 
 
 
@@ -114,12 +111,15 @@ int main(int argc, char* argv[]) {
     /////////////////
 
     /// MCI start ///
+    std::cout << std::endl << "########## START MCI for " << func_name << " ##########" << std::endl << std::endl;
     double start = omp_get_wtime();
     master_function(42, func, xmin, xmax, samples);
     double end = omp_get_wtime();
 
     double duration = end - start;
     std::cout << "RUNTIME: " << duration << " s" << std::endl << std::endl;
+    std::cout << "########################################" << std::endl << std::endl;
+
 
     return 0;
 }
