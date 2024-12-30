@@ -21,6 +21,8 @@ auto master_function(int value, double (*func)(double), double xmin, double xmax
     #pragma omp parallel reduction(+:final_approx, threads_num)
     {
         threads_num += 1;   // for getting total thread number
+
+        // divide samples among threads --> if odd number, master thread gets remaining samples
         int samples = N/omp_get_num_threads();
         if(omp_get_thread_num() == 0){
             samples += N%omp_get_num_threads();
@@ -35,7 +37,7 @@ auto master_function(int value, double (*func)(double), double xmin, double xmax
         //std::cout << "(samples: " << samples << ")" << std::endl << std::endl;
         final_approx += thread_approx;
     }
-
+    std::cout << "::chaos::ouptput::end::" << std::endl << std::endl;
     final_approx = final_approx/double(threads_num);
     std::cout << "Threads used: " << threads_num  << std::endl;
     std::cout << "Total samples: " << N << std::endl << std::endl;
@@ -111,7 +113,13 @@ int main(int argc, char* argv[]) {
     /////////////////
 
     /// MCI start ///
-    std::cout << std::endl << "########## START MCI for " << func_name << " ##########" << std::endl << std::endl;
+    if(func_name == "COS2XINV"){
+        std::cout << std::endl << "######## START MCI for " << func_name << " ########" << std::endl << std::endl;
+    } else {
+        std::cout << std::endl << "########## START MCI for " << func_name << " ##########" << std::endl << std::endl;
+    }
+    
+    std::cout << "::chaos::ouptput::start::" << std::endl << std::endl;
     double start = omp_get_wtime();
     master_function(42, func, xmin, xmax, samples);
     double end = omp_get_wtime();
