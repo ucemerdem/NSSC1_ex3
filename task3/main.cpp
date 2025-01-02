@@ -83,7 +83,7 @@ double process_MCI(int seed, double (*func)(double), double xmin, double xmax, i
 
 /////////// MAIN ///////////////
 
-// use: 'export OMP_NUM_THREADS=number' (1, 5, ...) before executing!
+// use: 'export OMP_NUM_THREADS=number' (1, 5, ...) before exceuting!
 
 
 int main(int argc, char* argv[]) {
