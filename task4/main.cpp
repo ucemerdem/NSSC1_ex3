@@ -12,6 +12,16 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <omp.h>
+
+/// for mode selection for the makefile
+#ifndef SCHEDULE_MODE
+#define SCHEDULE_MODE static //deafult is 'static'
+#endif
+/// for output in the terminal
+#ifndef OUTPUT_MODE
+#define OUTPUT_MODE 0 
+#endif
 
 namespace program_options {
 
@@ -20,9 +30,11 @@ struct Options {
   size_t N;
   size_t iters;
   void print() const {
-    std::printf("name: %s\n", name.c_str());
-    std::printf("N: %zu\n", N);
-    std::printf("iters: %zu\n", iters);
+    std::cout << "######## START JACOBI SOLVER ########" << std::endl << std::endl;
+    std::printf("    name: %s\n", name.c_str());
+    std::printf("       N: %zu\n", N);
+    std::printf("   iters: %zu\n", iters);
+    std::cout << std::endl << std::endl;
   }
 };
 
@@ -65,50 +77,64 @@ int main(int argc, char *argv[]) try {
                                   bool residual = false) {
     auto h = 1.0 / (N - 1);
     auto h2 = h * h;
+
+    int threads = 0;
+    #pragma omp parallel
+      #pragma omp single  //only for getting thread number for later output
+      {
+        threads = omp_get_num_threads();
+      }
+
+    ///////// PARALELLIZE HERE ///////////
+    #pragma omp parallel for schedule(SCHEDULE_MODE)
     // all interior points
-    for (size_t j = 1; j < N - 1; ++j) {
-      for (size_t i = 1; i < N - 1; ++i) {
-        auto w = xold[(i - 1) + (j)*N];
-        auto e = xold[(i + 1) + (j)*N];
-        auto n = xold[(i) + (j + 1) * N];
-        auto s = xold[(i) + (j - 1) * N];
-        auto c = xold[(i) + (j)*N];
-        if (!residual)
-          xnew[i + j * N] = (- (-1.0 / h2) * (w + e + n + s)) * h2 / 4.0;
-        else
-          xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4.0 * c);
+      for (size_t j = 1; j < N - 1; ++j) {
+        // if(residual == false) {
+        //   std::cout << "Hello from Thread " << omp_get_thread_num() << std::endl;
+        // }
+        for (size_t i = 1; i < N - 1; ++i) {
+          auto w = xold[(i - 1) + (j)*N];
+          auto e = xold[(i + 1) + (j)*N];
+          auto n = xold[(i) + (j + 1) * N];
+          auto s = xold[(i) + (j - 1) * N];
+          auto c = xold[(i) + (j)*N];
+          if (!residual)
+            xnew[i + j * N] = (- (-1.0 / h2) * (w + e + n + s)) * h2 / 4.0;
+          else
+            xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4.0 * c);
+        }
       }
-    }
-    // isolating south boundary
-    {
-      size_t j = 0;
-      for (size_t i = 1; i < N - 1; ++i) {
-        auto w = xold[(i - 1) + (j)*N];
-        auto e = xold[(i + 1) + (j)*N];
-        auto n = xold[(i) + (j + 1) * N];
-        auto s = n;
-        auto c = xold[(i) + (j)*N];
-        if (!residual)
-          xnew[i + j * N] = (- (-1.0 / h2) * (w + e + n + s)) * h2 / 4.0;
-        else
-          xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4 * c);
+      // isolating south boundary
+      {
+        size_t j = 0;
+        for (size_t i = 1; i < N - 1; ++i) {
+          auto w = xold[(i - 1) + (j)*N];
+          auto e = xold[(i + 1) + (j)*N];
+          auto n = xold[(i) + (j + 1) * N];
+          auto s = n;
+          auto c = xold[(i) + (j)*N];
+          if (!residual)
+            xnew[i + j * N] = (- (-1.0 / h2) * (w + e + n + s)) * h2 / 4.0;
+          else
+            xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4 * c);
+        }
       }
-    }
-    // isolating north boundary
-    {
-      size_t j = N - 1;
-      for (size_t i = 1; i < N - 1; ++i) {
-        auto w = xold[(i - 1) + (j)*N];
-        auto e = xold[(i + 1) + (j)*N];
-        auto s = xold[(i) + (j - 1) * N];
-        auto n = s;
-        auto c = xold[(i) + (j)*N];
-        if (!residual)
-          xnew[i + j * N] = (- (-1.0 / h2) * (w + e + n + s)) * h2 / 4.0;
-        else
-          xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4 * c);
+      // isolating north boundary
+      {
+        size_t j = N - 1;
+        for (size_t i = 1; i < N - 1; ++i) {
+          auto w = xold[(i - 1) + (j)*N];
+          auto e = xold[(i + 1) + (j)*N];
+          auto s = xold[(i) + (j - 1) * N];
+          auto n = s;
+          auto c = xold[(i) + (j)*N];
+          if (!residual)
+            xnew[i + j * N] = (- (-1.0 / h2) * (w + e + n + s)) * h2 / 4.0;
+          else
+            xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4 * c);
+        }
       }
-    }
+      return threads;
   };
 
   // write vector to csv
@@ -144,22 +170,41 @@ int main(int argc, char *argv[]) try {
     return max;
   };
 
+  //////// MAIN-MAIN --> start time here ////////
+  double start = omp_get_wtime();
+
   auto x1 = init();
   auto x2 = x1;
+  int threads = 0;
   for (size_t iter = 0; iter <= opts.iters; ++iter) {
-    jacobi_iter(x1, x2);
+    threads = jacobi_iter(x1, x2);
     std::swap(x1, x2);
   }
+  double end = omp_get_wtime();
+  double duration = end - start;
+  ///////////////////////////////////////////////
 
   // write(b);
 
-  write(x2);
+  //write(x2);
   jacobi_iter(x1, x2, true);
-
+  int mode = OUTPUT_MODE;
   std::cout << "  norm2 = " << norm2(x2) << std::endl;
-  std::cout << "normInf = " << normInf(x2) << std::endl;
+  std::cout << "normInf = " << normInf(x2) << std::endl << std::endl;
+  
+  if (mode == 0) {
+    std::cout << "Using scheduling mode: static" << std::endl;
+  } else if (mode == 1) {
+    std::cout << "Using scheduling mode: static,1" << std::endl;
+  } else if (mode == 2) {
+    std::cout << "Using scheduling mode: dynamic" << std::endl;
+  }
+  std::cout << "Threads: " << threads << std::endl;
+  std::cout << "--> DURATION: " << duration << std::endl << std::endl;
+  std::cout << "#####################################" << std::endl;
 
   return EXIT_SUCCESS;
+  
 } catch (std::exception &e) {
   std::cout << e.what() << std::endl;
   return EXIT_FAILURE;

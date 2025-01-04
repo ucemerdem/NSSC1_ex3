@@ -1,0 +1,315 @@
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 1
+--> DURATION: 1298.07
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 1
+--> DURATION: 823.02
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 1
+--> DURATION: 821.761
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 2
+--> DURATION: 799.494
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 2
+--> DURATION: 783.966
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 2
+--> DURATION: 857.114
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 4
+--> DURATION: 1421.01
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 4
+--> DURATION: 849.409
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 4
+--> DURATION: 857.197
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 8
+--> DURATION: 430.532
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 8
+--> DURATION: 497.334
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 8
+--> DURATION: 471.66
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 10
+--> DURATION: 712.723
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 10
+--> DURATION: 735.232
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 10
+--> DURATION: 330.124
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 20
+--> DURATION: 376.805
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 20
+--> DURATION: 616.58
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 20
+--> DURATION: 366.986
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static
+Threads: 40
+--> DURATION: 210.954
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: static1
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: static,1
+Threads: 40
+--> DURATION: 341.499
+
+#####################################
+######## START JACOBI SOLVER ########
+
+    name: dynamic
+       N: 2048
+   iters: 100000
+
+
+  norm2 = 4.25971e+06
+normInf = 4055.54
+
+Using scheduling mode: dynamic
+Threads: 40
+--> DURATION: 276.277
+
+#####################################
