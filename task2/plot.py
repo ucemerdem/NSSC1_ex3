@@ -11,12 +11,12 @@ def plot_and_save_residuals(filename, x, y_residuals):
     fig, ax = plt.subplots()
     ax.set(xlabel="CG iterations", ylabel=r"$\frac{{\| r_k \|}_2}{{\| r_0 \|}_2}$",title=f'{filename}')
 
-    plt.plot(x, y_residuals[:xrange], '.', color="red", label="Own Implementation")
-    plt.plot(x, y_residuals[xrange:2*xrange], '.', color="blue", label="Eigen DiagonalPreconditioner")
-    plt.plot(x, y_residuals[2*xrange:], '.', color="orange", label="Eigen IncompleteCholesky")
+    plt.plot(x, y_residuals[:xrange], '-', color="red", label="Own Implementation")
+    plt.plot(x, y_residuals[xrange:2*xrange], '-', color="blue", label="Eigen DiagonalPreconditioner")
+    plt.plot(x, y_residuals[2*xrange:], '-', color="orange", label="Eigen IncompleteCholesky")
     plt.yscale("log")
 
-    fig.savefig(filename + "_residuals.png")
+    fig.savefig(filename + "_residuals_" + str(len(x)) + ".png")
 
     plt.legend()
     plt.show()
@@ -24,7 +24,7 @@ def plot_and_save_residuals(filename, x, y_residuals):
 
 def run_c_program():
     filename = "bcsstk11.mtx"
-    iters = 50
+    iters = 100
     norms_residuals = []
 
     args = [filename, str(iters)]
