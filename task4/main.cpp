@@ -77,21 +77,12 @@ int main(int argc, char *argv[]) try {
                                   bool residual = false) {
     auto h = 1.0 / (N - 1);
     auto h2 = h * h;
-
-    int threads = 0;
-    #pragma omp parallel
-      #pragma omp single  //only for getting thread number for later output
-      {
-        threads = omp_get_num_threads();
-      }
-
+    //int threads = 0;
+    
     ///////// PARALELLIZE HERE ///////////
     #pragma omp parallel for schedule(SCHEDULE_MODE)
     // all interior points
       for (size_t j = 1; j < N - 1; ++j) {
-        // if(residual == false) {
-        //   std::cout << "Hello from Thread " << omp_get_thread_num() << std::endl;
-        // }
         for (size_t i = 1; i < N - 1; ++i) {
           auto w = xold[(i - 1) + (j)*N];
           auto e = xold[(i + 1) + (j)*N];
@@ -134,7 +125,7 @@ int main(int argc, char *argv[]) try {
             xnew[i + j * N] = (-1.0 / h2) * (w + e + n + s - 4 * c);
         }
       }
-      return threads;
+      //return threads;
   };
 
   // write vector to csv
@@ -177,7 +168,8 @@ int main(int argc, char *argv[]) try {
   auto x2 = x1;
   int threads = 0;
   for (size_t iter = 0; iter <= opts.iters; ++iter) {
-    threads = jacobi_iter(x1, x2);
+    //threads = jacobi_iter(x1, x2);
+    jacobi_iter(x1, x2);
     std::swap(x1, x2);
   }
   double end = omp_get_wtime();
@@ -199,7 +191,7 @@ int main(int argc, char *argv[]) try {
   } else if (mode == 2) {
     std::cout << "Using scheduling mode: dynamic" << std::endl;
   }
-  std::cout << "Threads: " << threads << std::endl;
+  //std::cout << "Threads: " << threads << std::endl;
   std::cout << "--> DURATION: " << duration << std::endl << std::endl;
   std::cout << "#####################################" << std::endl;
 
