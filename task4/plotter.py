@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 
 threads = [1, 2, 4, 8, 10, 20, 40]
-static = [636.512, 1076.68, 1117.12, 631.589, 459.566, 433.039, 311.395]
-static1 = [657.518, 1005.71, 1216.18, 989.14, 687.595, 603.176, 398.109]
-dynamic= [801.76, 686.001, 676.06, 448.696, 472.041, 380.726, 284.526]
+static = [1607.12, 1383.61, 1410.47, 796.474, 574.231, 223.734, 173.804]
+static1 = [1062.05, 1074.59, 1338.26, 1116.32, 815.824, 359.266, 249.827]
+dynamic= [758.044, 676.84, 666.89, 523.176, 510.006, 277.205, 225.815]
 
 def calc_speedup(func):
     listi = []
@@ -21,7 +21,7 @@ def plot_runtime_threads(threads, static, static1, dynamic):
     plt.plot(threads, dynamic, label="dynamic", marker="o", color="darkorange")
     plt.xlabel("Threads Used")
     plt.ylabel("Runtime (s)")
-    plt.title("A very wild Runtime Plot D:")
+    plt.title("A not so wild Runtime Plot anymore")
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -36,7 +36,7 @@ def plot_speed_up(threads, static, static1, dynamic):
     plt.plot(threads[1:], speedup_d, label="dynamic", marker="o", color="darkorange")
     plt.xlabel("Threads Used")
     plt.ylabel("Speedup")
-    plt.title("A strange Speedup Plot")
+    plt.title("A beautiful Speedup Plot")
     plt.legend()
     plt.tight_layout()
     plt.show()
