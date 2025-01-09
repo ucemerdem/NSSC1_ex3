@@ -200,7 +200,6 @@ vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b, u
     vector<double> x = x0;
     vector<double> Ap(ccs.getSize(), 0.0);
     double alpha, beta, r_old = r * r, r_norm, r_norm_old = sqrt(r * r);
-    double EPS = 1e-6;
     unsigned int iterations = 0;
     
     // These are needed for plotting the convergence of the CG method via the Python script
@@ -213,10 +212,7 @@ vector<double> executeCG(CCS_symm& ccs, vector<double>& x0, vector<double>& b, u
         x = x + alpha * p;
         r = r - alpha * Ap;
         r_norm = sqrt(r * r);
-        // FIXME: reconsider whether the stopping criterion is correct
-        if (r_norm < EPS || abs(r_norm - r_norm_old) < EPS){
-            break;
-        }
+
         beta = (r * r) / r_old;
         p = r + beta * p;
         r_norm_old = r_norm;

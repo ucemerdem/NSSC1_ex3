@@ -15,10 +15,10 @@ def plot_and_save_residuals(filename, x, y_residuals):
     plt.plot(x, y_residuals[xrange:2*xrange], '-', color="blue", label="Eigen DiagonalPreconditioner")
     plt.plot(x, y_residuals[2*xrange:], '-', color="orange", label="Eigen IncompleteCholesky")
     plt.yscale("log")
+    plt.legend()
 
     fig.savefig(filename + "_residuals_" + str(len(x)) + ".png")
 
-    plt.legend()
     plt.show()
 
 
